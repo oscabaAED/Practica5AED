@@ -77,7 +77,39 @@ Inspecciona visualmente los valores del conjunto de datos (`View`) y ordena de m
 
 ```{r Solucion ejercicio 1, include=TRUE, echo=TRUE, eval=TRUE, results=TRUE}
 # Medidas con valores faltantes, longitudes negativas y cero
+View(dirty_iris)
 
+sepal_w_desc <- dirty_iris %>% 
+  arrange(desc(Sepal.Width)) 
+# Los dos primeros valores parecen demasiado grandes respecto al resto
+
+sepal_w_asc <- dirty_iris %>% 
+  arrange(Sepal.Width)
+# Los valores de -3 y 0 no son posibles
+
+sepal_l_desc <- dirty_iris %>% 
+  arrange(desc(Sepal.Length))
+# Los dos primeros valores parecen demasiado grandes respecto al resto
+
+sepal_l_asc <- dirty_iris %>% 
+  arrange(Sepal.Length)
+# El valor de 0 no es posible
+
+petal_w_desc <- dirty_iris %>% 
+  arrange(desc(Petal.Width))
+# No es posible tener un valor infinito
+
+petal_w_asc <- dirty_iris %>% 
+  arrange(Petal.Width)
+# Nada raro aquí
+
+petal_l_desc <- dirty_iris %>% 
+  arrange(desc(Petal.Length))
+# Otra vez dos valores demasiado grandes
+
+petal_l_asc <- dirty_iris %>% 
+  arrange(Petal.Length)
+# Otro valor de 0 que no tiene sentido
 ```
 
 ## Ejercicio 2: Valores especiales
