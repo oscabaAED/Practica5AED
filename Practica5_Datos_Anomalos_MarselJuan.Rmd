@@ -79,36 +79,28 @@ Inspecciona visualmente los valores del conjunto de datos (`View`) y ordena de m
 # Medidas con valores faltantes, longitudes negativas y cero
 View(dirty_iris)
 
-sepal_w_desc <- dirty_iris %>% 
-  arrange(desc(Sepal.Width)) 
+sort(dirty_iris$Sepal.Width, decreasing = T) 
 # Los dos primeros valores parecen demasiado grandes respecto al resto
 
-sepal_w_asc <- dirty_iris %>% 
-  arrange(Sepal.Width)
+sort(dirty_iris$Sepal.Width, decreasing = F) 
 # Los valores de -3 y 0 no son posibles
 
-sepal_l_desc <- dirty_iris %>% 
-  arrange(desc(Sepal.Length))
+sort(dirty_iris$Sepal.Length, decreasing = T)
 # Los dos primeros valores parecen demasiado grandes respecto al resto
 
-sepal_l_asc <- dirty_iris %>% 
-  arrange(Sepal.Length)
+sort(dirty_iris$Sepal.Length, decreasing = F)
 # El valor de 0 no es posible
 
-petal_w_desc <- dirty_iris %>% 
-  arrange(desc(Petal.Width))
+sort(dirty_iris$Petal.Width, decreasing = T)
 # No es posible tener un valor infinito
 
-petal_w_asc <- dirty_iris %>% 
-  arrange(Petal.Width)
+sort(dirty_iris$Petal.Width, decreasing = F)
 # Nada raro aquí
 
-petal_l_desc <- dirty_iris %>% 
-  arrange(desc(Petal.Length))
+sort(dirty_iris$Petal.Length, decreasing = T)
 # Otra vez dos valores demasiado grandes
 
-petal_l_asc <- dirty_iris %>% 
-  arrange(Petal.Length)
+sort(dirty_iris$Petal.Length, decreasing = F)
 # Otro valor de 0 que no tiene sentido
 ```
 
@@ -130,9 +122,8 @@ Nota: Puedes reemplazar los valores para cada variable del dataframe usando `mut
 
 ```{r Solucion ejercicio 2, include=TRUE, echo=TRUE, eval=TRUE, results=TRUE}
 # DEBEMOS ELIMINAR TAMBIEN LOS VALROES IGUALES A CERO YA QUE SE TRATA DE LONGITUDES DE PARTES DE UNA FLOR. NO PUEDEN SER O
-dirty_iris2 <- dirty_iris %>%
-  mutate(across(c(Sepal.Length, Sepal.Width, Petal.Length, Petal.Width), 
-                ~ifelse(. > 0 & is.finite(.), ., NA)))
+dirty_iris <- dirty_iris %>%
+  mutate(across(where(is.numeric), ~ifelse(. <= 0 | !is.finite(.), NA, .)))
 ```
 
 
@@ -142,14 +133,13 @@ dirty_iris2 <- dirty_iris %>%
   * Emplea después la función `na.omit` para quedarnos solo con las filas con datos completos en un nuevo data frame `clean_iris`.
 
 ```{r Solucion ejercicio 3, include=TRUE, echo=TRUE, eval=TRUE, results=TRUE}
-casos_completos <- sum(complete.cases(dirty_iris2))
-casos_totales <- nrow(dirty_iris2)
+casos_completos <- sum(complete.cases(dirty_iris))
+casos_totales <- nrow(dirty_iris)
 porcentaje_completos <- 100*(casos_completos/casos_totales)
+cat("Porcentaje de observaciones completas:", porcentaje_completos, "%")
 
-clean_iris <- dirty_iris2 %>%
+clean_iris <- dirty_iris %>%
   na.omit()
-
-clean_iris
 ```
 
 # Detección de outliers univariante
@@ -183,7 +173,7 @@ clean_iris_calculos <- clean_iris %>%
             madm = ~madm(.),
             iqr = ~IQR(., na.rm = T))))
 
-dirty_iris_calculos <- dirty_iris2 %>% 
+dirty_iris_calculos <- dirty_iris %>% 
   summarise(across(where(is.numeric), list(
             media = ~mean(., na.rm = T),
             desviacion_tipica = ~sd(., na.rm = T),
@@ -228,6 +218,7 @@ reglasigma <- function(x){
   lim_inf <- media-sigma3
   lim_sup <- media+sigma3
   outliers <- (x < lim_inf) | (x > lim_sup)
+  outliers[is.na(outliers)] <- F
   return(outliers)
 }
 
@@ -239,6 +230,7 @@ reglahampel <- function(x){
   lim_inf <- mediana-madm3
   lim_sup <- mediana+madm3
   outliers <- (x < lim_inf) | (x > lim_sup)
+  outliers[is.na(outliers)] <- F
   return(outliers)
 }
 
@@ -251,13 +243,13 @@ reglaboxplot <- function(x){
   lim_inf <- x_i-1.5*IQR
   lim_sup <- x_s+1.5*IQR
   outliers <- (x < lim_inf) | (x > lim_sup)
-  outliers[is.na(outliers)] <- FALSE
+  outliers[is.na(outliers)] <- F
   return(outliers)
 }
 
 # Percentiles
 reglapercentil <- function(x){
-  cuantiles <- quantile(x, probs = c(0.05, 0.95), na.rm = TRUE)
+  cuantiles <- quantile(x, probs = c(0.05, 0.95), na.rm = T)
   lim_sup <- cuantiles[["95%"]]
   lim_inf <- cuantiles[["5%"]]
   outliers <- (x < lim_inf) | (x > lim_sup)
@@ -281,7 +273,16 @@ outliers_clean_iris <- clean_iris %>%
     percentil = reglapercentil),
     .names = "{.col}_outlier_{.fn}"))
 
-outliers_clean_iris
+outliers_dirty_iris <- dirty_iris %>% 
+  mutate(across(where(is.numeric), list(
+    sigma = reglasigma,
+    hampel = reglahampel, 
+    boxplot = reglaboxplot,
+    percentil = reglapercentil),
+    .names = "{.col}_outlier_{.fn}"))
+
+print(outliers_clean_iris)
+print(outliers_dirty_iris)
 ```
 
 ## Ejercicio 7: Comparativa de los métodos de detección de outliers
@@ -292,19 +293,37 @@ En los métodos de detección de outliers analizados, examina los resultados com
   * Los valores etiquetados como outliers (ordenados de menor a mayor).
 
 ```{r Solucion ejercicio 7, include=TRUE, echo=TRUE, eval=TRUE, results=TRUE}
-outliers_por_metodo <- outliers_clean_iris %>% 
+# Para clean_iris
+outliers_por_metodo_clean <- outliers_clean_iris %>% 
   select(contains("outlier"))
   
-sapply(outliers_por_metodo, sum)
+sapply(outliers_por_metodo_clean, sum)
 
+# Para dirty_iris
+outliers_por_metodo_dirty <- outliers_dirty_iris %>% 
+  select(contains("outlier"))
+  
+sapply(outliers_por_metodo_dirty, sum)
 
-# Vamos a ordenar solo por Petal.Length de momento, pero podría repetirse para el resto de variables
-outliers_petal_length <- outliers_clean_iris %>%
-  filter(outlier_ == TRUE) %>%
-  select(Petal.Length) %>%             
-  arrange(Petal.Length)               
+# Vamos a ordenar solo por Petal.Length, pero para el resto de variables sería igual
+outliers_petal_length_clean <- outliers_clean_iris %>%
+  filter(Petal.Length_outlier_sigma | 
+         Petal.Length_outlier_hampel |
+         Petal.Length_outlier_boxplot |
+         Petal.Length_outlier_percentil) %>%
+  select(Petal.Length, starts_with("Petal.Length_outlier")) %>%             
+  arrange(Petal.Length)
 
-print(valores_outliers_A)
+outliers_petal_length_dirty <- outliers_dirty_iris %>%
+  filter(Petal.Length_outlier_sigma | 
+         Petal.Length_outlier_hampel |
+         Petal.Length_outlier_boxplot |
+         Petal.Length_outlier_percentil) %>%
+  select(Petal.Length, starts_with("Petal.Length_outlier")) %>%             
+  arrange(Petal.Length)
+
+print(outliers_petal_length_clean)
+print(outliers_petal_length_dirty)
 ```
 
 ## Ejercicio 8: Representación gráfica
