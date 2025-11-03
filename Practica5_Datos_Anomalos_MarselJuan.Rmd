@@ -170,7 +170,38 @@ Hazlo para el data frame con observaciones completas `clean_iris` (que no tiene 
   * Compara los resultados para los dos conjuntos en la variable `Petal.Length`.
 
 ```{r , include = TRUE}
+madm <- function(x){
+  m <- 1.4826*median(abs(x-median(x, na.rm = T)), na.rm = T)
+  return(m)
+}
 
+clean_iris_calculos <- clean_iris %>% 
+  summarise(across(where(is.numeric), list(
+            media = ~mean(., na.rm = T),
+            mediana = ~median(., na.rm = T),
+            madm = ~madm(.),
+            iqr = ~IQR(., na.rm = T))))
+
+dirty_iris_calculos <- dirty_iris2 %>% 
+  summarise(across(where(is.numeric), list(
+            media = ~mean(., na.rm = T),
+            mediana = ~median(., na.rm = T),
+            madm = ~madm(.),
+            iqr = ~IQR(., na.rm = T))))
+
+petal_length_clean_calculos <- clean_iris_calculos %>% 
+  select(starts_with("Petal.Length"))
+
+petal_length_dirty_calculos <- dirty_iris_calculos%>% 
+  select(starts_with("Petal.Length"))
+
+comparacion_petal_length <- bind_rows(
+  clean = petal_length_clean_calculos,
+  dirty = petal_length_dirty_calculos,
+  .id = "dataset"
+)
+
+print(comparacion_petal_length)
 ```
 
 
