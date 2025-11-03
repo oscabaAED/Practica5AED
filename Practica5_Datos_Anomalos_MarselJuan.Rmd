@@ -221,17 +221,52 @@ Escribe una función que detecte los outliers de un vector $x$ para cada uno de 
 
 ```{r , include = FALSE}
 # Regla 3 sigma
-
+reglasigma <- function(x){
+  media <- mean(x, na.rm = T)
+  desv_est <- sd(x, na.rm = T)
+  sigma3 <- 3 * desv_est
+  lim_inf <- media-sigma3
+  lim_sup <- media+sigma3
+  outliers <- (x < lim_inf) | (x > lim_sup)
+  return(outliers)
+}
 
 # Identificador Hampel
-
-
+reglahampel <- function(x){
+  media <- mean(x, na.rm = T)
+  dispersion_madm <- madm(x)
+  madm3 <- 3*dispersion_madm
+  lim_inf <- media-madm3
+  lim_sup <- media+madm3
+  outliers <- (x < lim_inf) | (x > lim_sup)
+  return(outliers)
+}
 
 # Regla boxplot
-
+reglaboxplot <- function(x){
+  cuantiles <- quantile(x, probs = c(0.25, 0.75), na.rm = T)
+  x_s <- cuantiles[["75%"]]
+  x_i <- cuantiles[["25%"]]
+  IQR <- x_s-x_i
+  lim_inf <- x_i-1.5*IQR
+  lim_sup <- x_s+1.5*IQR
+  outliers <- (x < lim_inf) | (x > lim_sup)
+  outliers[is.na(outliers)] <- FALSE
+  return(outliers)
+}
 
 # Percentiles
+reglapercentil <- function(x){
+  cuantiles <- quantile(x, probs = c(0.05, 0.95), na.rm = TRUE)
+  lim_sup <- cuantiles[["95%"]]
+  lim_inf <- cuantiles[["5%"]]
+  outliers <- (x < lim_inf) | (x > lim_sup)
+  outliers[is.na(outliers)] <- F
+  return(outliers)
+}
 
+clean_iris_outliers <- clean_iris %>% 
+  mutate(outlier_sepal = reglasigma(Sepal.Length))
 ```
 
 
