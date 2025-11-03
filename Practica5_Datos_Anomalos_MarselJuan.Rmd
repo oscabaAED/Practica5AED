@@ -233,11 +233,11 @@ reglasigma <- function(x){
 
 # Identificador Hampel
 reglahampel <- function(x){
-  media <- mean(x, na.rm = T)
+  mediana <- median(x, na.rm = T)
   dispersion_madm <- madm(x)
   madm3 <- 3*dispersion_madm
-  lim_inf <- media-madm3
-  lim_sup <- media+madm3
+  lim_inf <- mediana-madm3
+  lim_sup <- mediana+madm3
   outliers <- (x < lim_inf) | (x > lim_sup)
   return(outliers)
 }
@@ -292,7 +292,19 @@ En los métodos de detección de outliers analizados, examina los resultados com
   * Los valores etiquetados como outliers (ordenados de menor a mayor).
 
 ```{r Solucion ejercicio 7, include=TRUE, echo=TRUE, eval=TRUE, results=TRUE}
+outliers_por_metodo <- outliers_clean_iris %>% 
+  select(contains("outlier"))
+  
+sapply(outliers_por_metodo, sum)
 
+
+# Vamos a ordenar solo por Petal.Length de momento, pero podría repetirse para el resto de variables
+outliers_petal_length <- outliers_clean_iris %>%
+  filter(outlier_ == TRUE) %>%
+  select(Petal.Length) %>%             
+  arrange(Petal.Length)               
+
+print(valores_outliers_A)
 ```
 
 ## Ejercicio 8: Representación gráfica
