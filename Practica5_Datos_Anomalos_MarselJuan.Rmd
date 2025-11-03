@@ -357,21 +357,22 @@ Se puede realizar una imputación generalizada (usando todos los valores de la v
 ```{r Solucion ejercicio 9a, include=TRUE, echo=TRUE, eval=TRUE, results=TRUE}
 media_petal_length <- mean(dirty_iris$Petal.Length, na.rm = TRUE)
 
-iris_media_petal <- dirty_iris %>% 
+iris_petal_imputados <- dirty_iris %>% 
   mutate(Petal.Length1 = ifelse(is.na(Petal.Length), media_petal_length, Petal.Length))
 
-print(iris_media_petal)
+print(iris_petal_imputados)
 ```
 
   * Imputa los missing data en `Petal.Length` empleando en esta ocasión la media para cada tipo de `Species` (usar`group_by` y `mutate`) creando una nueva variable `Petal.Length2`.
 
 ```{r Solucion ejercicio 9b, include=TRUE, echo=TRUE, eval=TRUE, results=TRUE}
-iris_media_species <- dirty_iris %>% 
+iris_petal_imputados <- iris_petal_imputados %>% 
   group_by(Species) %>% 
   mutate(media_species = mean(Petal.Length, na.rm = T),
-         Petal.Length2 = ifelse(is.na(Petal.Length), media_species, Petal.Length))
+         Petal.Length2 = ifelse(is.na(Petal.Length), media_species, Petal.Length)) %>%
+  ungroup()
 
-print(iris_media_species)
+print(iris_petal_imputados)
 ```
 
 ## Ejercicio 10: Representación gráfica
@@ -381,16 +382,25 @@ Vamos a comparar ahora los dos métodos de imputación gráficamente eliminando 
   * Recalcula las reglas de identificación de outliers (Ejercicio 6) para la nueva variable `Petal.Length2`.
   
 ```{r Solucion ejercicio 10a, include=TRUE, echo=TRUE, eval=TRUE, results=TRUE}
+iris_imputado_outliers <- iris_petal_imputados %>% 
+  mutate(across(Petal.Length2, list(
+    sigma = reglasigma,
+    hampel = reglahampel, 
+    boxplot = reglaboxplot,
+    percentil = reglapercentil),
+    .names = "{.col}_outlier_{.fn}"))
 
- 
+print(iris_imputado_outliers)
 ```
 
   * Representa los dos tipos de imputación empleados en un gráfico de dispersión (`Petal.Length1` vs. `Petal.Length2`) eliminando los outliers identificados con la regla `reglapercentil` y poniendo en diferente color los datos originales y los imputados.
 
 ```{r Solucion ejercicio 10b, include=TRUE, echo=TRUE, eval=TRUE, results=TRUE}
-
-
-
+iris_imputado_outliers %>%
+  mutate(TipoDato = ifelse(is.na(Petal.Length), "Imputado", "Original")) %>%
+  filter(Petal.Length2_outlier_percentil == FALSE) %>%
+  ggplot(aes(x = Petal.Length1, y = Petal.Length2, color = TipoDato)) +
+  geom_point()
 ```
 
 
