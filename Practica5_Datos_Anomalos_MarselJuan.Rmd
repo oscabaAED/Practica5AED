@@ -178,6 +178,7 @@ madm <- function(x){
 clean_iris_calculos <- clean_iris %>% 
   summarise(across(where(is.numeric), list(
             media = ~mean(., na.rm = T),
+            desviacion_tipica = ~sd(., na.rm = T),
             mediana = ~median(., na.rm = T),
             madm = ~madm(.),
             iqr = ~IQR(., na.rm = T))))
@@ -185,6 +186,7 @@ clean_iris_calculos <- clean_iris %>%
 dirty_iris_calculos <- dirty_iris2 %>% 
   summarise(across(where(is.numeric), list(
             media = ~mean(., na.rm = T),
+            desviacion_tipica = ~sd(., na.rm = T),
             mediana = ~median(., na.rm = T),
             madm = ~madm(.),
             iqr = ~IQR(., na.rm = T))))
