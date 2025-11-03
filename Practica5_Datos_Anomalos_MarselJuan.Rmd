@@ -333,7 +333,11 @@ Representa gráficamente los datos de `Petal.Length` (distribución de puntos en
 Nota: usa en `geom_point` con la opción `position='jitter'` para mejorar la legibilidad del gráfico.
 
 ```{r Solucion ejercicio 8, include=TRUE, echo=TRUE, eval=TRUE, results=TRUE}
-
+outliers_clean_iris %>% 
+  select(Petal.Length, starts_with("Petal.Length_outlier")) %>% 
+  pivot_longer(cols = -Petal.Length, names_to = "Metodo", values_to = "Outlier") %>% 
+  mutate(Metodo = sub("Petal.Length_outlier_", "", Metodo)) %>% 
+  ggplot(aes(x = Metodo, y = Petal.Length, color = Outlier)) + geom_point(position = "jitter")
 ```
 
 # Imputación de datos
