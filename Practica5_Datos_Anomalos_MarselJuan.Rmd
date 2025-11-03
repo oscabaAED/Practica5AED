@@ -264,9 +264,6 @@ reglapercentil <- function(x){
   outliers[is.na(outliers)] <- F
   return(outliers)
 }
-
-clean_iris_outliers <- clean_iris %>% 
-  mutate(outlier_sepal = reglasigma(Sepal.Length))
 ```
 
 
@@ -276,9 +273,15 @@ Utiliza la función `mutate` y `across` para identificar los outliers en la vari
 Nota: podría extenderse la aplicación a todas las variables numéricas usando también `mutate`, `across` y `where`. 
 
 ```{r Solucion ejercicio 6, include=TRUE, echo=TRUE, eval=TRUE, results=TRUE}
+outliers_clean_iris <- clean_iris %>% 
+  mutate(across(where(is.numeric), list(
+    sigma = reglasigma,
+    hampel = reglahampel, 
+    boxplot = reglaboxplot,
+    percentil = reglapercentil),
+    .names = "{.col}_outlier_{.fn}"))
 
-
-
+outliers_clean_iris
 ```
 
 ## Ejercicio 7: Comparativa de los métodos de detección de outliers
