@@ -142,7 +142,14 @@ dirty_iris2 <- dirty_iris %>%
   * Emplea después la función `na.omit` para quedarnos solo con las filas con datos completos en un nuevo data frame `clean_iris`.
 
 ```{r Solucion ejercicio 3, include=TRUE, echo=TRUE, eval=TRUE, results=TRUE}
+casos_completos <- sum(complete.cases(dirty_iris2))
+casos_totales <- nrow(dirty_iris2)
+porcentaje_completos <- 100*(casos_completos/casos_totales)
 
+clean_iris <- dirty_iris2 %>%
+  na.omit()
+
+clean_iris
 ```
 
 # Detección de outliers univariante
